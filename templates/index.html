@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>AI Heart Rate Detection</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+    <div class="main-container">
+
+        <!-- LEFT PANEL -->
+
+        <div class="left-panel">
+
+            <h1>AI HEALTH</h1>
+
+            <div class="card">
+
+                <h2>Blink Count</h2>
+
+                <p id="blink">0</p>
+
+            </div>
+
+            <div class="card">
+
+                <h2>Heart Rate</h2>
+
+                <p id="bpm">72 BPM</p>
+
+            </div>
+
+            <div class="card">
+
+                <h2>Accuracy</h2>
+
+                <p id="accuracy">95%</p>
+
+            </div>
+
+        </div>
+
+        <!-- CENTER VIDEO -->
+
+        <div class="video-section">
+
+            <div class="video-box">
+
+                <img src="{{ url_for('video') }}">
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL -->
+
+        <div class="right-panel">
+
+            <h1>LIVE BPM</h1>
+
+            <div class="graph-card">
+
+                <canvas id="bpmChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // =========================
+        // LIVE DATA UPDATE
+        // =========================
+
+        async function updateData() {
+
+            const response =
+                await fetch("/data");
+
+            const data =
+                await response.json();
+
+            // UPDATE VALUES
+
+            document.getElementById(
+                "blink"
+            ).innerText = data.blink;
+
+            document.getElementById(
+                    "bpm"
+                ).innerText =
+                data.bpm + " BPM";
+
+            document.getElementById(
+                    "accuracy"
+                ).innerText =
+                data.accuracy + "%";
+
+            // UPDATE GRAPH
+            addGraphData(data.bpm);
+        }
+
+        // =========================
+        // CHART
+        // =========================
+
+        const ctx =
+            document.getElementById(
+                'bpmChart'
+            ).getContext('2d');
+
+        const bpmChart = new Chart(ctx, {
+
+            type: 'line',
+
+            data: {
+
+                labels: [],
+
+                datasets: [{
+
+                    label: 'Heart Rate',
+
+                    data: [],
+
+                    borderColor: '#00ffff',
+
+                    backgroundColor: 'rgba(0,255,255,0.15)',
+
+                    borderWidth: 3,
+
+                    tension: 0.4,
+
+                    fill: true,
+
+                    pointRadius: 3,
+
+                    pointBackgroundColor: '#38bdf8'
+                }]
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+
+                        labels: {
+
+                            color: 'white',
+
+                            font: {
+
+                                size: 14
+                            }
+                        }
+                    }
+                },
+
+                scales: {
+
+                    x: {
+
+                        ticks: {
+
+                            color: '#ffffff'
+                        },
+
+                        grid: {
+
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    },
+
+                    y: {
+
+                        min: 60,
+
+                        max: 110,
+
+                        ticks: {
+
+                            color: '#38bdf8'
+                        },
+
+                        grid: {
+
+                            color: 'rgba(255,255,255,0.08)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // =========================
+        // GRAPH UPDATE
+        // =========================
+
+        let count = 0;
+
+        function addGraphData(bpm) {
+
+            if (
+                bpmChart.data.labels.length > 20
+            ) {
+
+                bpmChart.data.labels.shift();
+
+                bpmChart.data.datasets[0]
+                    .data.shift();
+            }
+
+            bpmChart.data.labels.push(
+                count++
+            );
+
+            bpmChart.data.datasets[0]
+                .data.push(bpm);
+
+            bpmChart.update();
+        }
+
+        // UPDATE EVERY SECOND
+
+        setInterval(updateData, 1000);
+    </script>
+
+</body>
+
+</html>
